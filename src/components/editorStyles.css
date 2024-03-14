@@ -1,0 +1,41 @@
+.editor {
+  margin: 20px;  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-title{
+display: flex;
+  justify-content: center;
+}
+
+.editor-button button{
+  display: flex;
+  justify-content:end;
+   padding: 8px 16px; 
+  background-color: #007bff; 
+  color: white; 
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.editor-button button:hover {
+  background-color: #0056b3; 
+}
+
+.editor-container {
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.editor-container .DraftEditor-root {
+  min-height: 150px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.editor-container .public-DraftEditor-content {
+  white-space: pre-wrap;
+}
