@@ -1,41 +1,83 @@
-.editor {
-  margin: 20px;  
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+body {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto Condensed", sans-serif;
 }
 
-.editor-title{
-display: flex;
-  justify-content: center;
+.code-block-style {
+  background-color: #f0f0f0;
+  padding: 10px;
+  font-family: monospace !important;
 }
 
-.editor-button button{
-  display: flex;
-  justify-content:end;
-   padding: 8px 16px; 
-  background-color: #007bff; 
-  color: white; 
+.DraftEditor-root {
+  border: 1px solid #000;
+  padding: 10px;
+  height: 450px !important;
+  width: 100%;
+  overflow-y: auto;
+}
+.DraftEditor-editorContainer,
+.public-DraftEditor-content {
+  height: 100%;
+}
+
+.save-button {
+ background-color: blue;
+  color: white;
+  padding: 10px;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
 }
 
-.editor-button button:hover {
-  background-color: #0056b3; 
+.save-button:hover {
+  background-color: darkblue;
+  text-decoration: none;
+  transition-duration: 0.1s;
+}
+
+.save-button:disabled {
+  background-color: #fafbfc;
+  border-color: rgba(27, 31, 35, 0.15);
+  color: #959da5;
+  cursor: default;
+}
+
+.save-button:active {
+  background-color: #edeff2;
+  box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+  transition: none 0s;
+}
+
+.save-button:focus {
+  outline: 1px transparent;
+}
+
+.save-button:before {
+  display: none;
+}
+
+.save-button:-webkit-details-marker {
+  display: none;
 }
 
 .editor-container {
-  border: 1px solid #ccc;
-  padding: 10px;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 30px;
 }
 
-.editor-container .DraftEditor-root {
-  min-height: 150px;
-  padding: 10px;
-  overflow-y: auto;
+.editor-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-.editor-container .public-DraftEditor-content {
-  white-space: pre-wrap;
+.editor-title-container {
+  flex-grow: 1;
+  text-align: center;
 }

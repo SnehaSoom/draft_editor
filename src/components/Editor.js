@@ -1,119 +1,132 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import "./editorStyles.css";
 import {
   Editor,
   EditorState,
   RichUtils,
   getDefaultKeyBinding,
-  convertToRaw,
   convertFromRaw,
+  CompositeDecorator,
+  Modifier,
+  convertToRaw,
 } from "draft-js";
 import "draft-js/dist/Draft.css";
-import "./editorStyles.css"; // Import CSS file for styling
 
-const EditorComponent = () => {
+const applyBlockStyle = (contentBlock) =>
+  contentBlock.getType() === "code-block" ? "code-block-style" : "";
+
+const RED_COLOR_STYLE = { color: "red" };
+
+const highlightRedText = {
+  strategy: (contentBlock, callback) =>
+    contentBlock.findStyleRanges(
+      (character) => character.hasStyle("RED_COLOR"),
+      callback
+    ),
+  component: (props) => <span style={RED_COLOR_STYLE}>{props.children}</span>,
+};
+
+const editorDecorator = new CompositeDecorator([highlightRedText]);
+
+const TextEditor = () => {
+  const [isSaving, setIsSaving] = useState(false);
   const [editorState, setEditorState] = useState(() => {
-    const savedContent = localStorage.getItem("draftEditorContent");
-    if (savedContent) {
-      return EditorState.createWithContent(
-        convertFromRaw(JSON.parse(savedContent))
-      );
-    } else {
-      return EditorState.createEmpty();
-    }
+    const savedContent = localStorage.getItem("SavedContent");
+    return savedContent
+      ? EditorState.createWithContent(
+          convertFromRaw(JSON.parse(savedContent)),
+          editorDecorator
+        )
+      : EditorState.createEmpty(editorDecorator);
   });
 
-  useEffect(() => {
-    const contentState = editorState.getCurrentContent();
-    const serializedContent = JSON.stringify(convertToRaw(contentState));
-    localStorage.setItem("draftEditorContent", serializedContent);
-  }, [editorState]);
+  const handleEditorChange = (newEditorState) => {
+    let contentState = newEditorState.getCurrentContent();
+    const selectionState = newEditorState.getSelection();
+    const anchorKey = selectionState.getAnchorKey();
+    const currentContentBlock = contentState.getBlockForKey(anchorKey);
+    const start = selectionState.getStartOffset();
+    const text = currentContentBlock.getText();
 
-  const handleKeyCommand = (command, editorState) => {
-    const newState = RichUtils.handleKeyCommand(editorState, command);
-    if (newState) {
-      setEditorState(newState);
-      return "handled";
+    // Function to apply block type and remove the marker
+    const applyBlockTypeAndRemoveMarker = (blockType, marker) => {
+      const markerLength = marker.length;
+      const newSelection = selectionState.merge({
+        anchorOffset: 0,
+        focusOffset: markerLength,
+      });
+
+      // Remove the marker and apply the block type
+      contentState = Modifier.removeRange(
+        contentState,
+        newSelection,
+        "backward"
+      );
+      const newContentState = Modifier.setBlockType(
+        contentState,
+        newSelection,
+        blockType
+      );
+      return EditorState.push(
+        newEditorState,
+        newContentState,
+        "change-block-type"
+      );
+    };
+
+    // Check for markers followed by a space
+    if (text.startsWith("# ") && start === 2) {
+      setEditorState(applyBlockTypeAndRemoveMarker("header-one", "#"));
+    } else if (text.startsWith("* ") && start === 2) {
+      setEditorState(applyBlockTypeAndRemoveMarker("unstyled", "*"));
+      setEditorState(RichUtils.toggleInlineStyle(newEditorState, "BOLD"));
+    } else if (text.startsWith("** ") && start === 3) {
+      setEditorState(applyBlockTypeAndRemoveMarker("unstyled", "**"));
+      setEditorState(RichUtils.toggleInlineStyle(newEditorState, "RED_COLOR"));
+    } else if (text.startsWith("*** ") && start === 4) {
+      setEditorState(applyBlockTypeAndRemoveMarker("unstyled", "***"));
+      setEditorState(RichUtils.toggleInlineStyle(newEditorState, "UNDERLINE"));
+    } else {
+      setEditorState(newEditorState);
     }
-    return "not-handled";
-  };
 
-  const mapKeyToEditorCommand = (e) => {
-    if (e.keyCode === 9 /* TAB key */) {
-      const newEditorState = RichUtils.onTab(e, editorState, 4 /* maxDepth */);
-      if (newEditorState !== editorState) {
-        setEditorState(newEditorState);
-      }
-      return;
-    }
-    return getDefaultKeyBinding(e);
-  };
-
-  const handleInputChange = (editorState) => {
-    setEditorState(editorState);
-  };
-
-  const handleSave = () => {
-    // Handle saving content
-    console.log(
-      "Content saved:",
-      editorState.getCurrentContent().getPlainText()
+    // Save to local storage
+    localStorage.setItem(
+      "SavedContent",
+      JSON.stringify(convertToRaw(newEditorState.getCurrentContent()))
     );
   };
 
-  const inlineStyles = {
-    "#": "header-one",
-    "*": "BOLD",
-    "**": "STRIKETHROUGH",
-    "***": "UNDERLINE",
-  };
-
-  const handleBeforeInput = (char, editorState) => {
-    const selectionState = editorState.getSelection();
-    const contentState = editorState.getCurrentContent();
-    const startKey = selectionState.getStartKey();
-    const block = contentState.getBlockForKey(startKey);
-    const text = block.getText();
-  
-    for (const [marker, style] of Object.entries(inlineStyles)) {
-      if (text.startsWith(marker)) {
-        const newContentState = RichUtils.toggleInlineStyle(
-          editorState.getCurrentContent(),
-          style
-        );
-        const newEditorState = EditorState.push(
-          editorState,
-          newContentState,
-          "change-inline-style"
-        );
-        setEditorState(newEditorState);
-        return "handled";
-      }
-    }
-  
-    return "not-handled";
-  };
-
   return (
-    <div>
-      <div className="editor">
-        <div className="editor-title">
-          <h2>Demo Editor by Sneha Singh</h2>
+    <div className="editor-container">
+      <div className="editor-header">
+        <div className="editor-title-container">
+          <h3>Demo editor by Sneha Singh</h3>
         </div>
-        <div className="editor-button">
-          <button onClick={handleSave}>Save</button>
-        </div>
+        <button
+          onClick={() => setIsSaving(!isSaving)}
+          className="save-button"
+          disabled={isSaving}
+        >
+          {isSaving ? "SAVED" : "SAVE"}
+        </button>
       </div>
-      <div className="editor-container">
+      <div className="editor-border">
         <Editor
           editorState={editorState}
-          handleKeyCommand={handleKeyCommand}
-          keyBindingFn={mapKeyToEditorCommand}
-          onChange={handleInputChange}
-          handleBeforeInput={handleBeforeInput}
+          handleKeyCommand={(command, state) =>
+            RichUtils.handleKeyCommand(state, command)
+              ? "handled"
+              : "not-handled"
+          }
+          keyBindingFn={getDefaultKeyBinding}
+          handlePastedText={(text, state) => handleEditorChange(state)}
+          onChange={handleEditorChange}
+          blockStyleFn={applyBlockStyle}
         />
       </div>
     </div>
   );
 };
 
-export default EditorComponent;
+export default TextEditor;
