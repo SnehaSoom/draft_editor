@@ -1,13 +1,11 @@
 import React from 'react';
-import EditorComponent from './components/Editor';
 import './components/editorStyles.css'; // Import CSS file for styling
-import MyEditor from './components/MyEditor';
+import Editor from './components/Editor.js';
 
 const App = () => {
   return (
     <div>
-      {/* <EditorComponent /> */}
-      <MyEditor />
+            <Editor />
     </div>
   );
 };

@@ -90,7 +90,7 @@ const TextEditor = () => {
       setEditorState(newEditorState);
     }
 
-    // save in local
+    // Save to local storage
     localStorage.setItem(
       "SavedContent",
       JSON.stringify(convertToRaw(newEditorState.getCurrentContent()))
@@ -129,4 +129,4 @@ const TextEditor = () => {
   );
 };
 
-export default TextEditor;
+export default TextEditor; 
